@@ -1,3 +1,7 @@
+body {
+	font-family: sans-serif;
+}
+
 .calendar {
 	height:720px;
 	width:620px;
@@ -36,12 +40,19 @@
 	width:100%;
 	height:inherit;
 	margin-left: 100px;
-	background-color:#E1E1E1;
+	background-color:#ececec;
 	position: relative;
 }
 
 .calendar .events > div {
 	background:white;
-	border:1px solid green;
+	border:1px solid #D1D1D1;
+	border-left:5px solid #57b986;
 	position: absolute;
+	margin-left:10px;
+	padding:10px;
+}
+
+.calendar .events > div > * {
+	margin:0;
 }

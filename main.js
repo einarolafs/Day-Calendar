@@ -28,22 +28,33 @@ const layOutDay = function createEvents (events) {
 		console.error('The varible given is not an Array and therefor cannot be processed ' + pleseProvide)
 		return
 	}
+	let errorInput = [];
 	events.forEach(function(event) {
 		if(event.start < 0 || event.end > 720) {
 			console.error('incorrect time values, start time cannot be lower then 0 and end time cannot be higher then 720');
+
+			errorInput.push(1);
 			
 		}
 	});
+
+	if (!!errorInput.length) {return}
 	
+
+	//Clear container of previous content
 	while (events_container.hasChildNodes()) {
 	    events_container.removeChild(events_container.lastChild);
 	}
 
+	const content = "<h4>Sample event</h4><p>Sample event</p>"
+
+	//Container to hold all events
 	events_spaces = {}
 
 	events.forEach( function(event, index) {
 		let container = document.createElement("div");
-		let width = 600, position = 0, style = container.style;
+		container.insertAdjacentHTML('beforeend', content);
+		let width = 600, position = 0, style = container.style, padding = 20;
 
 		let how_many_events = []
 
@@ -58,37 +69,37 @@ const layOutDay = function createEvents (events) {
 		}
 
 		//Divide with among all items that overlap
-		width = width / (how_many_events.length + 1 );
+		width = (width / (how_many_events.length + 1)) - 10;
 
 		//First if is when overlapping items are more then 1
 		if(how_many_events.length > 1) {
 			for (past in how_many_events) {
-				how_many_events[past].container.style.width = width + 'px';
+				how_many_events[past].container.style.width = (width - padding) + 'px';
 				how_many_events[past].container.style.left = (width * position) + 'px';
 
 				position++;
 			} 
 		} else {
 			for (past in how_many_events) { 
-				if (Number.parseInt(how_many_events[past].container.style.left) === width) {
+				if (how_many_events[past].position === width) {
 					position = 0;
 				} else { 
-					how_many_events[past].container.style.width = width + 'px';
+					how_many_events[past].container.style.width = (width - padding) + 'px';
 					position++ 
 				}
 			}
 		}
 
-		style.width = (width) + 'px';
-		style.left = (width * position) + 'px';
-		style.height = (event.end - event.start) + 'px';
+		style.width = (width - padding) + 'px';
+		style.left = ((width * position) + (position > 0 ? 10 : 0)) + 'px';
+		style.height = (event.end - event.start - padding) + 'px';
 		style.top = event.start + 'px';
 
 		// Add the item to an object that will store all the items to display, so that they can be retrieved and calculated against
 		events_spaces[Math.random().toString(36).substr(2, 10)] = {
 			end: event.end,
 			start: event.start,
-			position: position,
+			position: (width * position),
 			container: container,
 		};
 
