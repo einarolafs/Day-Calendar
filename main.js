@@ -11,34 +11,94 @@ const events_container = document.querySelector('.calendar .events')
 
 for(let i = 0; i < calTime.length; i++) {
 	let container = document.createElement("div");
-
 	const twelve_hour = i >= 6 ? 'pm' : 'am';
-
 	let content = document.createTextNode(`${calTime[i]} ${is_even(i) ? twelve_hour : ''}`);
-
 	container.append(content); time_container.append(container);
-
-
 }
-
-const randomId = () => Math.random().toString(36).substr(2, 10);
 
 const layOutDay = function createEvents (events) { 
 
-	event_spaces = []
+	var pleseProvide = 'Please provide an array of objets in the format of {start:50, end:100}'
 
-	for (let i = 0; i < events.length; i++) {
-		const event = events[i];
-		let container = document.createElement("div");
-		container.style.width = '600px'
-		container.style.height = (event.end - event.start) + 'px';
-		container.style.top = event.start + 'px';
-
-		events_container.appendChild(container);
-
-		console.log((event.end - event.start) + 'px');
+	if(!events) {
+		console.error('No arguments to process. ' + pleseProvide)
+		return
 	}
+	if (!(events instanceof Array)) {
+		console.error('The varible given is not an Array and therefor cannot be processed ' + pleseProvide)
+		return
+	}
+	events.forEach(function(event) {
+		if(event.start < 0 || event.end > 720) {
+			console.error('incorrect time values, start time cannot be lower then 0 and end time cannot be higher then 720');
+			
+		}
+	});
+	
+	while (events_container.hasChildNodes()) {
+	    events_container.removeChild(events_container.lastChild);
+	}
+
+	events_spaces = {}
+
+	events.forEach( function(event, index) {
+		let container = document.createElement("div");
+		let width = 600, position = 0, style = container.style;
+
+		let how_many_events = []
+
+		//count the amount of events that overlap with this one
+		for (past in events_spaces) {
+
+			if (events_spaces[past].end > event.start && events_spaces[past].start < event.end) {
+
+				how_many_events.push(events_spaces[past])
+
+			}
+		}
+
+		//Divide with among all items that overlap
+		width = width / (how_many_events.length + 1 );
+
+		//First if is when overlapping items are more then 1
+		if(how_many_events.length > 1) {
+			for (past in how_many_events) {
+				how_many_events[past].container.style.width = width + 'px';
+				how_many_events[past].container.style.left = (width * position) + 'px';
+
+				position++;
+			} 
+		} else {
+			for (past in how_many_events) { 
+				if (Number.parseInt(how_many_events[past].container.style.left) === width) {
+					position = 0;
+				} else { 
+					how_many_events[past].container.style.width = width + 'px';
+					position++ 
+				}
+			}
+		}
+
+		style.width = (width) + 'px';
+		style.left = (width * position) + 'px';
+		style.height = (event.end - event.start) + 'px';
+		style.top = event.start + 'px';
+
+		// Add the item to an object that will store all the items to display, so that they can be retrieved and calculated against
+		events_spaces[Math.random().toString(36).substr(2, 10)] = {
+			end: event.end,
+			start: event.start,
+			position: position,
+			container: container,
+		};
+
+	})
+
+	for (event in events_spaces) {
+		events_container.appendChild(events_spaces[event].container);
+	}
+
 
 }
 
-layOutDay([ {start: 30, end: 150}, {start: 540, end: 600}, {start: 560, end: 620}, {start: 610, end: 670} ]);
+layOutDay([{start: 30, end: 150}, {start: 540, end: 600}, {start: 560, end: 620}, {start: 610, end: 670} ]);
