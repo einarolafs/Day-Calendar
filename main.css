@@ -5,25 +5,43 @@
 }
 
 .calendar .time {
-	width:100px;
+	width:90px;
+	height:100%;
 	float:left;
 	padding-right:10px;
 	border-right:1px solid gray;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+
 }
 
-.time div {
+.calendar .time div {
 	font-size:18px;
 	font-weight: bold;
 	text-align: right;
 	color:gray;
-	margin-bottom:10px;
 }
 
-.time div:last-child {
+.calendar .time div:last-child {
 	margin-bottom:0;
 }
 
-.time div:nth-child(2n) {
+.calendar .time div:nth-child(2n) {
 	font-size:12px;
 	font-weight: normal;
+}
+
+.calendar .events {
+	width:100%;
+	height:inherit;
+	margin-left: 100px;
+	background-color:#E1E1E1;
+	position: relative;
+}
+
+.calendar .events > div {
+	background:white;
+	border:1px solid green;
+	position: absolute;
 }

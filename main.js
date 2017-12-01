@@ -6,6 +6,7 @@ const calTime = ['9:00', '9:30', '10:00', '10:30', '11:00', '11:30', '12:00', '1
 const is_even = (x) => !(x % 2);
 
 const time_container = document.querySelector('.calendar .time');
+const events_container = document.querySelector('.calendar .events')
 
 
 for(let i = 0; i < calTime.length; i++) {
@@ -19,3 +20,25 @@ for(let i = 0; i < calTime.length; i++) {
 
 
 }
+
+const randomId = () => Math.random().toString(36).substr(2, 10);
+
+const layOutDay = function createEvents (events) { 
+
+	event_spaces = []
+
+	for (let i = 0; i < events.length; i++) {
+		const event = events[i];
+		let container = document.createElement("div");
+		container.style.width = '600px'
+		container.style.height = (event.end - event.start) + 'px';
+		container.style.top = event.start + 'px';
+
+		events_container.appendChild(container);
+
+		console.log((event.end - event.start) + 'px');
+	}
+
+}
+
+layOutDay([ {start: 30, end: 150}, {start: 540, end: 600}, {start: 560, end: 620}, {start: 610, end: 670} ]);
