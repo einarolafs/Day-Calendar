@@ -1,0 +1,29 @@
+.calendar {
+	height:720px;
+	width:620px;
+
+}
+
+.calendar .time {
+	width:100px;
+	float:left;
+	padding-right:10px;
+	border-right:1px solid gray;
+}
+
+.time div {
+	font-size:18px;
+	font-weight: bold;
+	text-align: right;
+	color:gray;
+	margin-bottom:10px;
+}
+
+.time div:last-child {
+	margin-bottom:0;
+}
+
+.time div:nth-child(2n) {
+	font-size:12px;
+	font-weight: normal;
+}
