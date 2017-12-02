@@ -16,6 +16,18 @@ for(let i = 0; i < calTime.length; i++) {
 	container.append(content); time_container.append(container);
 }
 
+function median(values){
+	values.sort(function(a,b){
+  	return a-b;
+  });
+  var half = Math.floor(values.length / 2);
+  
+  if (values.length % 2)
+  	return values[half];
+  else
+  	return (values[half - 1] + values[half]) / 2.0;
+}
+
 const layOutDay = function createEvents (events) { 
 
 	var pleseProvide = 'Please provide an array of objets in the format of {start:50, end:100}'
@@ -46,7 +58,7 @@ const layOutDay = function createEvents (events) {
 	    events_container.removeChild(events_container.lastChild);
 	}
 
-	const content = "<h4>Sample event</h4><p>Sample event</p>"
+	const content = "<div><h4>Sample event</h4><p>Sample event</p></div>"
 
 	//Container to hold all events
 	events_spaces = {}
@@ -54,7 +66,7 @@ const layOutDay = function createEvents (events) {
 	events.forEach( function(event, index) {
 		let container = document.createElement("div");
 		container.insertAdjacentHTML('beforeend', content);
-		let width = 600, position = 0, style = container.style, padding = 20;
+		let width = 600, position = 0, style = container.style;
 
 		let how_many_events = []
 
@@ -69,30 +81,43 @@ const layOutDay = function createEvents (events) {
 		}
 
 		//Divide with among all items that overlap
-		width = (width / (how_many_events.length + 1)) - 10;
+		width = (width / (how_many_events.length + 1));
 
+		let count_colition = [1];
+
+		how_many_events.forEach( function(element, index) {
+			count_colition.push(index + 2);
+		});
 		//First if is when overlapping items are more then 1
 		if(how_many_events.length > 1) {
+			let index = 1
 			for (past in how_many_events) {
-				how_many_events[past].container.style.width = (width - padding) + 'px';
-				how_many_events[past].container.style.left = (width * position) + 'px';
+				console.log('index', index)
+				console.log('count_colition', count_colition);
+				console.log('count_colition median', median((count_colition)))
+				console.log('width', width)
+				console.log('radius', (width/2))
+				console.log('result of end', ((index - median(count_colition)) * width))
+				position = ((index - median(count_colition)) * width)
+				how_many_events[past].container.style.width = width + 'px';
+				how_many_events[past].container.style.left = position + 'px';
 
-				position++;
+				index++;
 			} 
 		} else {
 			for (past in how_many_events) { 
 				if (how_many_events[past].position === width) {
 					position = 0;
 				} else { 
-					how_many_events[past].container.style.width = (width - padding) + 'px';
+					how_many_events[past].container.style.width = width + 'px';
 					position++ 
 				}
 			}
 		}
 
-		style.width = (width - padding) + 'px';
-		style.left = ((width * position) + (position > 0 ? 10 : 0)) + 'px';
-		style.height = (event.end - event.start - padding) + 'px';
+		style.width = width + 'px';
+		style.left = (width * position) + (position > 0 ? 10 : 0) + 'px';
+		style.height = (event.end - event.start) + 'px';
 		style.top = event.start + 'px';
 
 		// Add the item to an object that will store all the items to display, so that they can be retrieved and calculated against

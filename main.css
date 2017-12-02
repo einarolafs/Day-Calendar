@@ -45,14 +45,17 @@ body {
 }
 
 .calendar .events > div {
+	position: absolute;
+}
+
+.calendar .events > div > div {
+	padding:10px;
 	background:white;
 	border:1px solid #D1D1D1;
 	border-left:5px solid #57b986;
-	position: absolute;
-	margin-left:10px;
-	padding:10px;
+	height: calc(100% - 20px);
 }
 
-.calendar .events > div > * {
+.calendar .events > div > div > * {
 	margin:0;
 }
