@@ -1,5 +1,5 @@
 
-//Create the time of day on the side programaticly, so as to make the html document as clean as possible
+//Create the time of day on the side programmatically, so as to make the html document as clean as possible
 
 const calTime = ['9:00', '9:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '1:00', '1:30', '2:00', '2:30', '3:00', '3:30', '4:00', '4:30', '5:00', '5:30', '6:00', '6:30', '7:00', '7:30', '8:00', '8:30', '9:00']
 
@@ -30,23 +30,27 @@ function median(values){
 
 const layOutDay = function createEvents (events) { 
 
-	var pleseProvide = 'Please provide an array of objets in the format of {start:50, end:100}'
+	var pleseProvide = 'Please provide an array of objects in the format of {start:50, end:100}'
 
 	if(!events) {
 		console.error('No arguments to process. ' + pleseProvide)
 		return
 	}
 	if (!(events instanceof Array)) {
-		console.error('The varible given is not an Array and therefor cannot be processed ' + pleseProvide)
+		console.error('The variable given is not an Array and therefor cannot be processed. ' + pleseProvide)
 		return
 	}
 	let errorInput = [];
 	events.forEach(function(event) {
 		if(event.start < 0 || event.end > 720) {
-			console.error('incorrect time values, start time cannot be lower then 0 and end time cannot be higher then 720');
+			console.error('incorrect time values, start time cannot be lower then 0 and end time cannot be higher then 720.');
 
 			errorInput.push(1);
 			
+		} else if (event.end < event.start){
+			console.error('Incorrect time values, end time cannot be lower then the start time.');
+
+			errorInput.push(1);
 		}
 	});
 
@@ -71,9 +75,10 @@ const layOutDay = function createEvents (events) {
 
 		let width = 600, position = 0, style = container.style;
 
+		// Array to store all events that are overlapping with the event being created
 		let how_many_events = []
 
-		//count the amount of events that overlap with this one
+		//count the amount of events that overlap with this one and store each one in an array
 		for (past in events_spaces) {
 
 			if (events_spaces[past].end > event.start && events_spaces[past].start < event.end) {
