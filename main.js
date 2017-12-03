@@ -64,8 +64,11 @@ const layOutDay = function createEvents (events) {
 	events_spaces = {}
 
 	events.forEach( function(event, index) {
+
 		let container = document.createElement("div");
+
 		container.insertAdjacentHTML('beforeend', content);
+
 		let width = 600, position = 0, style = container.style;
 
 		let how_many_events = []
@@ -82,27 +85,28 @@ const layOutDay = function createEvents (events) {
 
 		//Divide with among all items that overlap
 		width = (width / (how_many_events.length + 1));
+		let radius = width / 2;
+
+		console.log(width, radius);
 
 		let count_colition = [1];
 
 		how_many_events.forEach( function(element, index) {
 			count_colition.push(index + 2);
 		});
+
+		//console.log('count_colition', count_colition)
+
+		let overlapping_index = 1; 
 		//First if is when overlapping items are more then 1
 		if(how_many_events.length > 1) {
-			let index = 1
 			for (past in how_many_events) {
-				console.log('index', index)
-				console.log('count_colition', count_colition);
-				console.log('count_colition median', median((count_colition)))
-				console.log('width', width)
-				console.log('radius', (width/2))
-				console.log('result of end', ((index - median(count_colition)) * width))
-				position = ((index - median(count_colition)) * width)
+				position = ((overlapping_index - median(count_colition)) * width)
 				how_many_events[past].container.style.width = width + 'px';
-				how_many_events[past].container.style.left = position + 'px';
+				how_many_events[past].container.style.left = 'calc(50% - ' + radius + 'px';
+				how_many_events[past].container.style.transform = 'translatex('+ position +'px)'
 
-				index++;
+				overlapping_index++;
 			} 
 		} else {
 			for (past in how_many_events) { 
@@ -116,7 +120,20 @@ const layOutDay = function createEvents (events) {
 		}
 
 		style.width = width + 'px';
-		style.left = (width * position) + (position > 0 ? 10 : 0) + 'px';
+
+		//console.log(overlapping_index);
+
+		if (count_colition.length > 2) {
+		 position = ((overlapping_index - median(count_colition)) * width)
+		 style.left = position + 'px';
+		 style.left = 'calc(50% - ' + radius + 'px';
+		 style.transform = 'translatex('+ position +'px)'
+		 console.log('move')
+		}
+		else {
+			style.left = (width * position) + (position > 0 ? 10 : 0) + 'px';
+		}
+
 		style.height = (event.end - event.start) + 'px';
 		style.top = event.start + 'px';
 
