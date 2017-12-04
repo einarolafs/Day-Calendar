@@ -1,4 +1,4 @@
-//Create the time of day on the side programmatically, so as to make the html document as clean as possible
+//Create the time of day on the side programmatically, so as to keep the html document as clean as possible
 
 const time_of_day = ['9:00', '9:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '1:00', '1:30', '2:00', '2:30', '3:00', '3:30', '4:00', '4:30', '5:00', '5:30', '6:00', '6:30', '7:00', '7:30', '8:00', '8:30', '9:00']
 
@@ -68,8 +68,6 @@ const layOutDay = function createEvents (events) {
 
    // End of error checking
 
-
-
    //Clear events container of previous content
    events_container.innerHTML = '';
 
@@ -108,7 +106,7 @@ const layOutDay = function createEvents (events) {
          event.style.transform = 'translatex('+ position +'px)'
       }
 
-      //count the amount of events that overlap with this one and store each one in an array
+      // Count the amount of events that overlap with this one and store each one in an array
       for (past in events_spaces) {
          if (events_spaces[past].end > event.start && events_spaces[past].start < event.end) {
             overlap.events.push(events_spaces[past]);
@@ -116,21 +114,27 @@ const layOutDay = function createEvents (events) {
          }
       }
 
-      //Divide width among all items that overlap
+      // Divide width among all items that overlap
       properties.width = (properties.width / (overlap.events.length + 1));
 
       if(overlap.events.length > 1) {
          for (past in overlap.events) {
+
             style_multiple_events(overlap.events[past].container, overlap.index, overlap.count, properties.width);
+
             overlap.index++;
          } 
       } else {
          for (past in overlap.events) { 
             if (overlap.events[past].position === properties.width) {
+
                properties.position = 0;
+               
             } else { 
+
                overlap.events[past].container.style.width = properties.width + 'px';
                properties.position++ 
+
             }
          }
       }
