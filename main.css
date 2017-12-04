@@ -13,49 +13,77 @@ body {
 	height:100%;
 	float:left;
 	padding-right:10px;
-	border-right:1px solid gray;
-	display: flex;
-	flex-direction: column;
-	justify-content: space-between;
+	border-right:1px solid #838584;
 
 }
 
 .calendar .time div {
-	font-size:18px;
+	font-size:14px;
 	font-weight: bold;
 	text-align: right;
-	color:gray;
+	color:#838584;
+	height:30px;
+    line-height: 14px;
+    transform: translateY(-25%);
+}
+
+.calendar .time div:nth-child(2n) {
+	font-weight: normal;
+	font-size:12px;
+
 }
 
 .calendar .time div:last-child {
 	margin-bottom:0;
 }
 
-.calendar .time div:nth-child(2n) {
-	font-size:12px;
+.calendar .time div > span {
+	text-transform: uppercase;
 	font-weight: normal;
+	font-size:12px;
+	line-height: 12px;
 }
 
 .calendar .events {
 	width:100%;
 	height:inherit;
 	margin-left: 100px;
-	background-color:#ececec;
+	background-color:#EBEBEB;
 	position: relative;
 }
 
 .calendar .events > div {
 	position: absolute;
+	transform: translateX(10px);
+}
+
+.calendar .events > div:hover {
+	z-index: 100;
 }
 
 .calendar .events > div > div {
 	padding:10px;
 	background:white;
 	border:1px solid #D1D1D1;
-	border-left:5px solid #57b986;
-	height: calc(100% - 20px);
+	border-left:5px solid #52AC89;
+	height: calc(100% - 21px);
+	overflow: hidden;
 }
 
 .calendar .events > div > div > * {
 	margin:0;
+}
+
+.calendar .events > div > div h4 {
+	color:#52AC89;
+	font-weight:400;
+	font-size: 14px;
+
+}
+
+.calendar .events > div > div p {
+	font-size:12px;
+	font-weight:normal;
+	color:#838584;
+
 }
