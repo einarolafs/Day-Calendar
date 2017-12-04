@@ -3,7 +3,9 @@
 const time_of_day = ['9:00', '9:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '1:00', '1:30', '2:00', '2:30', '3:00', '3:30', '4:00', '4:30', '5:00', '5:30', '6:00', '6:30', '7:00', '7:30', '8:00', '8:30', '9:00']
 
 // Helper function to check if number is even or odd
-const is_even = (x) => !(x % 2);
+const is_even = function(x){
+   return !(x % 2); 
+}
 
 // Helper function to find the median of a row of numbers within an array
 const median = function find_median(values){
@@ -27,8 +29,8 @@ const events_container = document.querySelector('.calendar .events')
 time_of_day.forEach(function(time, i){
    let container = document.createElement("div");
    const twelve_hour = i >= 6 ? '<span>pm</span>' : '<span>am</span>';
-   let content = `${time_of_day[i]} ${is_even(i) ? twelve_hour : ''}`;
-   container.insertAdjacentHTML('beforeend', content); time_container.append(container);
+   let content = time_of_day[i] + ' ' + (is_even(i) ? twelve_hour : '');
+   container.insertAdjacentHTML('beforeend', content); time_container.appendChild(container);
 });
 
 
