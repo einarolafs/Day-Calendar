@@ -61,9 +61,6 @@ body {
 
 .calendar .events > div:hover {
 	z-index: 100;
-	min-height: 60px;
-	min-width:300px;
-	transition: all 0.5s;
 }
 
 .calendar .events > div > div {

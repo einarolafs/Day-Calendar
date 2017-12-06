@@ -19,6 +19,20 @@ const median = function find_median(values){
         return (values[half - 1] + values[half]) / 2.0;
 }
 
+function compare(a, b) {
+  // Use toUpperCase() to ignore character casing
+  const genreA = a.start;
+  const genreB = b.start;
+
+  let comparison = 0;
+  if (genreA > genreB) {
+    comparison = 1;
+  } else if (genreA < genreB) {
+    comparison = -1;
+  }
+  return comparison;
+}
+
 //Store reference to the DOM containers that will be populated with the time on the left side and the events
 const time_container = document.querySelector('.calendar .time');
 const events_container = document.querySelector('.calendar .events')
@@ -34,39 +48,11 @@ time_of_day.forEach(function(time, i){
 
 const layOutDay = function createEvents (events) { 
 
-   // Star with some error handling to make sure the array of events and the events them selfs are correct
-
-   var pleseProvide = 'Please provide an array of objects in the format of {start:50, end:100}'
-
-   if(!events) {
-      console.error('No arguments to process. ' + pleseProvide)
-      return
-   }
-
-   if (!(events instanceof Array)) {
-      console.error('The variable given is not an Array and therefor cannot be processed. ' + pleseProvide)
-      return
-   }
-
-   let errorInput = [];
-   events.forEach(function(event) {
-      if(event.start < 0 || event.end > 720) {
-         console.error('incorrect time values, start time cannot be lower then 0 and end time cannot be higher then 720.');
-
-         errorInput.push(1);
-         
-      } else if (event.end < event.start){
-         console.error('Incorrect time values, end time cannot be lower then the start time.');
-
-         errorInput.push(1);
-      }
-   });
-
-   if (!!errorInput.length) {return}
+    if(checkErrors(events)){return}
 
    // End of error checking
-
-
+    events = events.sort(compare);
+    console.log(events);
 
    //Clear events container of previous content
    events_container.innerHTML = '';
@@ -76,12 +62,15 @@ const layOutDay = function createEvents (events) {
 
    //Object to hold all the events
    events_spaces = {}
+   event_index = 0;
 
    events.forEach( function(event, index) {
 
       let container = document.createElement("div");
 
       container.insertAdjacentHTML('beforeend', content);
+
+      events_spaces[event_index] = {id: event_index};
 
       let properties = {
          width: 600,
@@ -92,8 +81,20 @@ const layOutDay = function createEvents (events) {
       }
 
       let overlap = {
-         events: [],
-         count: [1],
+         events: {},
+         shallow_events:{},
+         count: function countProperties(shallow = false) {
+            var count = [];
+            var i = 0;
+
+            for(var prop in (shallow ? this.shallow_events : this.events)) {
+                if(this.events.hasOwnProperty(prop))
+                    count.push(i);
+                    ++i;
+            }
+
+            return count;
+        },
          index: 1,
       }
 
@@ -102,28 +103,41 @@ const layOutDay = function createEvents (events) {
          position = ((index - median(count)) * width);
 
          event.style.width = width + 'px';
-         event.style.left = 'calc(50% - ' + (width / 2) + 'px';
-         event.style.transform = 'translatex('+ position +'px)'
+         event.style.left = properties.get_position() + 'px';
       }
 
       //count the amount of events that overlap with this one and store each one in an array
-      for (past in events_spaces) {
-         if (events_spaces[past].end > event.start && events_spaces[past].start < event.end) {
-            overlap.events.push(events_spaces[past]);
-            overlap.count.push(overlap.count.length + 1);
+      for (past_events in events_spaces) {
+        past = events_spaces[past_events];
+        i = event_index;
+
+         if (past.end > event.start && past.start < event.end && event_index > 0) {
+            overlap.events[past.id] = past;
+            overlap.shallow_events[past.id] = past;
+
+            for (deep_overlap in past.overlap) {
+                overlap.events[past.overlap[deep_overlap].id] = past.overlap[deep_overlap];
+            }
          }
       }
-
       //Divide width among all items that overlap
-      properties.width = (properties.width / (overlap.events.length + 1));
 
-      if(overlap.events.length > 1) {
+      console.log(overlap);
+      
+
+      if(overlap.count().length > 1 && overlap.count(true).length > 1) {
+         
+         properties.width = (properties.width / (overlap.count().length + 1));
+
          for (past in overlap.events) {
-            style_multiple_events(overlap.events[past].container, overlap.index, overlap.count, properties.width);
+            style_multiple_events(overlap.events[past].container, overlap.index, overlap.count(), properties.width);
             overlap.index++;
          } 
       } else {
-         for (past in overlap.events) { 
+
+         properties.width = (properties.width / (overlap.count(true).length + 1));
+
+         for (past in overlap.shallow_events) { 
             if (overlap.events[past].position === properties.width) {
                properties.position = 0;
             } else { 
@@ -133,26 +147,69 @@ const layOutDay = function createEvents (events) {
          }
       }
 
-      if (overlap.count.length > 2) style_multiple_events(container, overlap.index, overlap.count, properties.width);
+      if (overlap.count().length > 1) style_multiple_events(container, overlap.index, overlap.count(), properties.width);
       else container.style.left = properties.get_position() + 'px';
 
       container.style.width = properties.width + 'px';
       container.style.height = (event.end - event.start) + 'px';
       container.style.top = event.start + 'px';
+      container.id = event_index;
 
       // Add the event to an object that will store all the events to display, so that they can be retrieved and calculated against
-      events_spaces[Math.random().toString(36).substr(2, 10)] = {
-         end: event.end,
+      events_spaces[event_index] = {
+         id: events_spaces[event_index].id,
          start: event.start,
+         end: event.end,
          position: properties.get_position(),
+         overlap: overlap.events,
          container: container,
       };
+
+      event_index++
 
    })
 
    for (event in events_spaces) {
       events_container.appendChild(events_spaces[event].container);
    }
+
+   console.log(events_spaces);
 }
 
-layOutDay([{start: 30, end: 150}, {start: 540, end: 600}, {start: 560, end: 620}, {start: 610, end: 670} ]);
+function checkErrors(events) {
+       // Star with some error handling to make sure the array of events and the events them selfs are correct
+
+   let pleseProvide = 'Please provide an array of objects in the format of {start:50, end:100}'
+
+   var errorInput = false;
+
+   if(!events) {
+      console.error('No arguments to process. ' + pleseProvide)
+      errorInput = true;
+      return
+   }
+
+   if (!(events instanceof Array)) {
+      console.error('The variable given is not an Array and therefor cannot be processed. ' + pleseProvide)
+      errorInput = true;
+      return
+   }
+
+   events.forEach(function(event) {
+      if(event.start < 0 || event.end > 720) {
+         console.error('incorrect time values, start time cannot be lower then 0 and end time cannot be higher then 720.');
+
+         errorInput = true;
+         
+      } else if (event.end < event.start){
+         console.error('Incorrect time values, end time cannot be lower then the start time.');
+
+         errorInput = true;
+      }
+   });
+
+   if (errorInput) {return}
+}
+
+/*layOutDay([{start: 30, end: 150}, {start: 540, end: 600}, {start: 560, end: 620}, {start: 610, end: 670} ]);*/
+layOutDay(testEvents);
