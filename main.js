@@ -5,20 +5,6 @@ const time_of_day = ['9:00', '9:30', '10:00', '10:30', '11:00', '11:30', '12:00'
 // Helper function to check if number is even or odd
 const is_even = (x) => !(x % 2);
 
-// Helper function to find the median of a row of numbers within an array
-const median = function find_median(values){
-   values.sort(function(a,b){
-        return a-b;
-    });
-     
-     var half = Math.floor(values.length / 2);
-  
-     if (values.length % 2)
-        return values[half];
-     else
-        return (values[half - 1] + values[half]) / 2.0;
-}
-
 function compare(a, b) {
   // Use toUpperCase() to ignore character casing
   const genreA = a.start;
@@ -47,7 +33,7 @@ time_of_day.forEach(function(time, i){
 
 
 const layOutDay = function createEvents (events) { 
-
+    console.log(events);
     if(checkErrors(events)){return}
 
     // End of error checking
@@ -62,7 +48,6 @@ const layOutDay = function createEvents (events) {
     //Object to hold all the events
     events_spaces = {}
 
-
     event_index = 0;
 
     events.forEach( function(event, index) {
@@ -75,9 +60,8 @@ const layOutDay = function createEvents (events) {
 
         let properties = {
             width: 600,
-            position: 0,
             get_position: function(){
-                return this.width * this.position;
+                return this.width * overlap.index;
             }
         }
 
@@ -89,8 +73,14 @@ const layOutDay = function createEvents (events) {
                 var i = 0;
 
                 for(var prop in (shallow ? this.shallow_events : this.events)) {
-                    if(this.events.hasOwnProperty(prop))
-                    count.push(i);
+                    if(shallow){
+                        if(this.shallow_events.hasOwnProperty(prop))
+                        count.push(i);
+                    } else {
+                        if(this.events.hasOwnProperty(prop))
+                        count.push(i);
+                    }
+                    
                     ++i;
                 }
 
@@ -121,13 +111,33 @@ const layOutDay = function createEvents (events) {
         }
         
         // Divide width among all items that overlap
-         properties.width = (properties.width / (overlap.count().length + 1));
 
-         for (past in overlap.events) {
-            style_events(overlap.events[past].container, overlap.index, properties.width);
-            overlap.index++;
-        } 
-            properties.width = (properties.width / (overlap.count.length + 1));
+            last_index = event_index > 0 ? event_index - 1 : 0;
+/*
+            console.log(last_index)
+            console.log(events_spaces[last_index])
+            console.log('count', events_spaces[last_index].count);
+            console.log('shallow_count', events_spaces[last_index].shallow_count);*/
+
+            if(events_spaces[last_index].width === 300 && events_spaces[last_index].shallow_count === 1 && overlap.count(true) < 2) {
+                let overlaped = 300;
+                for(overlap_event in overlap.events){
+                    overlaped = events_spaces[overlap_event].position; 
+                }
+                properties.width = 300;
+                overlap.index = overlaped === 300 ? 0 : 1;
+           } else {
+
+             properties.width = (properties.width / (overlap.count().length + 1));
+
+             for (past in overlap.events) {
+                style_events(overlap.events[past].container, overlap.index, properties.width);
+                overlap.index++;
+
+            }
+        }
+
+
 /*
         for (past in overlap.shallow_events) { 
             if (overlap.events[past].position === properties.width) {
@@ -139,6 +149,8 @@ const layOutDay = function createEvents (events) {
         }*/
 
        /* console.log(event_index, properties.width, events_spaces[event_index -1]);*/
+
+       
 
         style_events(container, overlap.index, properties.width);
 
@@ -155,17 +167,21 @@ const layOutDay = function createEvents (events) {
             position: properties.get_position(),
             width: properties.width,
             overlap: overlap.events,
+            shallow_overlap: overlap.shallow_events,
+            count: overlap.count().length,
+            shallow_count: overlap.count(true).length,
             container: container,
         };
 
         for(new_event in overlap.events) {
-            console.log(new_event, event_index)
-            if(new_event !== event_index) events_spaces[new_event].overlap = overlap.events;
+            events_spaces[new_event].overlap = overlap.events;
         }
 
         event_index++
 
     });
+
+    console.log(events_spaces);
 
    for (event in events_spaces) {
       events_container.appendChild(events_spaces[event].container);
@@ -209,5 +225,8 @@ function checkErrors(events) {
    if (errorInput) {return true}
 }
 
-layOutDay([{start: 30, end: 150}, {start: 540, end: 600}, {start: 560, end: 620}, {start: 610, end: 670} ]);
-/*layOutDay(createEvents(5));*/
+/*layOutDay([{start: 30, end: 150}, {start: 540, end: 600}, {start: 560, end: 620}, {start: 610, end: 670} ]);*/
+let conflicted = [{"start":31,"end":466},{"start":51,"end":403},{"start":88,"end":141},{"start":203,"end":562},{"start":340,"end":502},{"start":388,"end":569},{"start":406,"end":608},{"start":559,"end":670},{"start":668,"end":699},{"start":682,"end":709}];
+
+let smallColide = [{"start":132,"end":683},{"start":255,"end":352},{"start":664,"end":698}];
+layOutDay(createEvents(10));
