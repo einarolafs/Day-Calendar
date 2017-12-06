@@ -132,6 +132,7 @@ const layOutDay = function createEvents (events) {
 
              for (past in overlap.events) {
                 style_events(overlap.events[past].container, overlap.index, properties.width);
+                overlap.events[past].width = properties.width;
                 overlap.index++;
 
             }
@@ -180,8 +181,32 @@ const layOutDay = function createEvents (events) {
         event_index++
 
     });
+    
+    for(event in events_spaces) {
+        let total_width = events_spaces[event].width;
+        
+        for (overlap_event in events_spaces[event].overlap) {
+            total_width = total_width + events_spaces[event].overlap[overlap_event].width;
+        }
 
-    console.log(events_spaces);
+        if(total_width < 600 && events_spaces[event].position !== 0) {
+            console.log(events_spaces[event]);
+            let space = (600 - total_width);
+            let width = events_spaces[event].width + space;
+            let position = events_spaces[event].position - space;
+
+            console.log('total_width:', total_width, 'space: ', space, 'width: ', width, 'position: ', position)
+
+            events_spaces[event].width = width;
+            events_spaces[event].position = position;
+            events_spaces[event].container.style.width = width + "px";
+            events_spaces[event].container.style.left = position + "px";
+            console.log(events_spaces[event]);
+
+        };
+    }
+
+    //console.log(events_spaces);
 
    for (event in events_spaces) {
       events_container.appendChild(events_spaces[event].container);
@@ -229,4 +254,14 @@ function checkErrors(events) {
 let conflicted = [{"start":31,"end":466},{"start":51,"end":403},{"start":88,"end":141},{"start":203,"end":562},{"start":340,"end":502},{"start":388,"end":569},{"start":406,"end":608},{"start":559,"end":670},{"start":668,"end":699},{"start":682,"end":709}];
 
 let smallColide = [{"start":132,"end":683},{"start":255,"end":352},{"start":664,"end":698}];
-layOutDay(createEvents(10));
+
+let emptySpaces = [{"start":41,"end":401},{"start":49,"end":369},{"start":51,"end":103},{"start":177,"end":428},{"start":293,"end":407},{"start":450,"end":677},{"start":547,"end":637},{"start":640,"end":679},{"start":672,"end":701},{"start":691,"end":704}]
+
+let wrongPosition = [{"start":122,"end":596},{"start":355,"end":488},{"start":490,"end":597},{"start":611,"end":668},{"start":700,"end":720}];
+
+layOutDay(wrongPosition);
+
+
+function createNewEvents(){
+    layOutDay(createEvents(document.getElementById('numberValue').value));
+}
