@@ -50,124 +50,126 @@ const layOutDay = function createEvents (events) {
 
     if(checkErrors(events)){return}
 
-   // End of error checking
+    // End of error checking
     events = events.sort(compare);
-    console.log(events);
 
-   //Clear events container of previous content
-   events_container.innerHTML = '';
+    //Clear events container of previous content
+    events_container.innerHTML = '';
 
-   //Create simple content for each event
-   const content = "<div><h4>Sample event</h4><p>Sample event</p></div>"
+    //Create simple content for each event
+    const content = "<div><h4>Sample event</h4><p>Sample event</p></div>"
 
-   //Object to hold all the events
-   events_spaces = {}
-   event_index = 0;
+    //Object to hold all the events
+    events_spaces = {}
+    event_index = 0;
 
-   events.forEach( function(event, index) {
+    events.forEach( function(event, index) {
 
-      let container = document.createElement("div");
+        let container = document.createElement("div");
 
-      container.insertAdjacentHTML('beforeend', content);
+        container.insertAdjacentHTML('beforeend', content);
 
-      events_spaces[event_index] = {id: event_index};
+        events_spaces[event_index] = {id: event_index};
 
-      let properties = {
-         width: 600,
-         position: 0,
-         get_position: function(){
-            return this.width * this.position;
-         }
-      }
+        let properties = {
+            width: 600,
+            position: 0,
+            get_position: function(){
+                return this.width * this.position;
+            }
+        }
 
-      let overlap = {
-         events: {},
-         shallow_events:{},
-         count: function countProperties(shallow = false) {
-            var count = [];
-            var i = 0;
+        let overlap = {
+            events: {},
+            shallow_events:{},
+            count: function countProperties(shallow = false) {
+                var count = [];
+                var i = 0;
 
-            for(var prop in (shallow ? this.shallow_events : this.events)) {
-                if(this.events.hasOwnProperty(prop))
+                for(var prop in (shallow ? this.shallow_events : this.events)) {
+                    if(this.events.hasOwnProperty(prop))
                     count.push(i);
                     ++i;
+                }
+
+                return count;
+            },
+            index: 1,
+        }
+
+        // Function to be used to style multiple overlapping events.
+        const style_multiple_events = function(event, index, count, width) {
+            position = ((index - median(count)) * width);
+
+            event.style.width = width + 'px';
+            event.style.left = 'calc(50% - ' + (width * 2) + 'px';
+            event.style.transform = 'translatex('+ position +'px)'
+        }
+
+
+        //count the amount of events that overlap with this one and store each one in an array
+        for (past_events in events_spaces) {
+            past = events_spaces[past_events];
+            i = event_index;
+
+            if (past.end > event.start && past.start < event.end && event_index > 0) {
+                overlap.events[past.id] = past;
+                overlap.shallow_events[past.id] = past;
+
+                for (deep_overlap in past.overlap) {
+                    overlap.events[past.overlap[deep_overlap].id] = past.overlap[deep_overlap];
+                }
             }
+        }
+        
+        //Divide width among all items that overlap
 
-            return count;
-        },
-         index: 1,
-      }
-
-      // Function to be used to style multiple overlapping events.
-      const style_multiple_events = function(event, index, count, width) {
-         position = ((index - median(count)) * width);
-
-         event.style.width = width + 'px';
-         event.style.left = properties.get_position() + 'px';
-      }
-
-      //count the amount of events that overlap with this one and store each one in an array
-      for (past_events in events_spaces) {
-        past = events_spaces[past_events];
-        i = event_index;
-
-         if (past.end > event.start && past.start < event.end && event_index > 0) {
-            overlap.events[past.id] = past;
-            overlap.shallow_events[past.id] = past;
-
-            for (deep_overlap in past.overlap) {
-                overlap.events[past.overlap[deep_overlap].id] = past.overlap[deep_overlap];
-            }
-         }
-      }
-      //Divide width among all items that overlap
-
-      console.log(overlap);
-      
-
-      if(overlap.count().length > 1 && overlap.count(true).length > 1) {
+        if(overlap.count().length > 1 && overlap.count(true).length > 1) {
          
-         properties.width = (properties.width / (overlap.count().length + 1));
+            properties.width = (properties.width / (overlap.count().length + 1));
 
-         for (past in overlap.events) {
-            style_multiple_events(overlap.events[past].container, overlap.index, overlap.count(), properties.width);
-            overlap.index++;
-         } 
-      } else {
+            for (past in overlap.events) {
+                style_multiple_events(overlap.events[past].container, overlap.index, overlap.count(), properties.width);
+                overlap.index++;
+            } 
+        } else {
+            properties.width = (properties.width / (overlap.count(true).length + 1));
 
-         properties.width = (properties.width / (overlap.count(true).length + 1));
-
-         for (past in overlap.shallow_events) { 
-            if (overlap.events[past].position === properties.width) {
-               properties.position = 0;
-            } else { 
-               overlap.events[past].container.style.width = properties.width + 'px';
-               properties.position++ 
+            for (past in overlap.shallow_events) { 
+                if (overlap.events[past].position === properties.width) {
+                    properties.position = 0;
+                } else { 
+                    overlap.events[past].container.style.width = properties.width + 'px';
+                    properties.position++ 
+                }
             }
-         }
-      }
+        }
 
-      if (overlap.count().length > 1) style_multiple_events(container, overlap.index, overlap.count(), properties.width);
-      else container.style.left = properties.get_position() + 'px';
+        if (overlap.count().length > 1 && overlap.count(true).length > 1) { 
+            style_multiple_events(container, overlap.index, overlap.count(), properties.width) 
+        }
+        else {
+            container.style.left = properties.get_position() + 'px';
+        }
 
-      container.style.width = properties.width + 'px';
-      container.style.height = (event.end - event.start) + 'px';
-      container.style.top = event.start + 'px';
-      container.id = event_index;
+        container.style.width = properties.width + 'px';
+        container.style.height = (event.end - event.start) + 'px';
+        container.style.top = event.start + 'px';
+        container.id = event_index;
 
-      // Add the event to an object that will store all the events to display, so that they can be retrieved and calculated against
-      events_spaces[event_index] = {
-         id: events_spaces[event_index].id,
-         start: event.start,
-         end: event.end,
-         position: properties.get_position(),
-         overlap: overlap.events,
-         container: container,
-      };
+        // Add the event to an object that will store all the events to display, so that they can be retrieved and calculated against
+        events_spaces[event_index] = {
+            id: events_spaces[event_index].id,
+            start: event.start,
+            end: event.end,
+            position: properties.get_position(),
+            overlap: overlap.events,
+            container: container,
+        };
 
-      event_index++
+        event_index++
 
-   })
+    })
 
    for (event in events_spaces) {
       events_container.appendChild(events_spaces[event].container);
@@ -175,6 +177,9 @@ const layOutDay = function createEvents (events) {
 
    console.log(events_spaces);
 }
+
+
+
 
 function checkErrors(events) {
        // Star with some error handling to make sure the array of events and the events them selfs are correct
@@ -208,8 +213,8 @@ function checkErrors(events) {
       }
    });
 
-   if (errorInput) {return}
+   if (errorInput) {return true}
 }
 
 /*layOutDay([{start: 30, end: 150}, {start: 540, end: 600}, {start: 560, end: 620}, {start: 610, end: 670} ]);*/
-layOutDay(testEvents);
+layOutDay(createEvents(10));

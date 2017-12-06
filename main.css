@@ -55,8 +55,8 @@ body {
 .calendar .events > div {
 	position: absolute;
 	transform: translateX(10px);
-	min-width:0;
-	min-height:0;
+	overflow: hidden;
+
 }
 
 .calendar .events > div:hover {
@@ -68,7 +68,7 @@ body {
 	background:white;
 	border:1px solid #D1D1D1;
 	border-left:5px solid #52AC89;
-	height: calc(100% - 21px);
+	height: calc(100% - 22px);
 	overflow: hidden;
 }
 
