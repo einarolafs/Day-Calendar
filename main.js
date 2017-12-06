@@ -61,6 +61,8 @@ const layOutDay = function createEvents (events) {
 
     //Object to hold all the events
     events_spaces = {}
+
+
     event_index = 0;
 
     events.forEach( function(event, index) {
@@ -69,7 +71,7 @@ const layOutDay = function createEvents (events) {
 
         container.insertAdjacentHTML('beforeend', content);
 
-        events_spaces[event_index] = {id: event_index};
+        events_spaces[event_index] = {id: event_index, overlap:{}};
 
         let properties = {
             width: 600,
@@ -94,20 +96,16 @@ const layOutDay = function createEvents (events) {
 
                 return count;
             },
-            index: 1,
+            index: 0,
         }
 
         // Function to be used to style multiple overlapping events.
-        const style_multiple_events = function(event, index, count, width) {
-            position = ((index - median(count)) * width);
-
+        const style_events = function(event, index, width) {
             event.style.width = width + 'px';
-            event.style.left = 'calc(50% - ' + (width * 2) + 'px';
-            event.style.transform = 'translatex('+ position +'px)'
+            event.style.left = (index * width) + 'px';
         }
 
-
-        //count the amount of events that overlap with this one and store each one in an array
+        // Count the amount of events that overlap with this one and store each one in an array
         for (past_events in events_spaces) {
             past = events_spaces[past_events];
             i = event_index;
@@ -122,35 +120,27 @@ const layOutDay = function createEvents (events) {
             }
         }
         
-        //Divide width among all items that overlap
+        // Divide width among all items that overlap
+         properties.width = (properties.width / (overlap.count().length + 1));
 
-        if(overlap.count().length > 1 && overlap.count(true).length > 1) {
-         
-            properties.width = (properties.width / (overlap.count().length + 1));
-
-            for (past in overlap.events) {
-                style_multiple_events(overlap.events[past].container, overlap.index, overlap.count(), properties.width);
-                overlap.index++;
-            } 
-        } else {
-            properties.width = (properties.width / (overlap.count(true).length + 1));
-
-            for (past in overlap.shallow_events) { 
-                if (overlap.events[past].position === properties.width) {
-                    properties.position = 0;
-                } else { 
-                    overlap.events[past].container.style.width = properties.width + 'px';
-                    properties.position++ 
-                }
+         for (past in overlap.events) {
+            style_events(overlap.events[past].container, overlap.index, properties.width);
+            overlap.index++;
+        } 
+            properties.width = (properties.width / (overlap.count.length + 1));
+/*
+        for (past in overlap.shallow_events) { 
+            if (overlap.events[past].position === properties.width) {
+                properties.position = 0;
+            } else { 
+                overlap.events[past].container.style.width = properties.width + 'px';
+                properties.position++ 
             }
-        }
+        }*/
 
-        if (overlap.count().length > 1 && overlap.count(true).length > 1) { 
-            style_multiple_events(container, overlap.index, overlap.count(), properties.width) 
-        }
-        else {
-            container.style.left = properties.get_position() + 'px';
-        }
+       /* console.log(event_index, properties.width, events_spaces[event_index -1]);*/
+
+        style_events(container, overlap.index, properties.width);
 
         container.style.width = properties.width + 'px';
         container.style.height = (event.end - event.start) + 'px';
@@ -163,22 +153,25 @@ const layOutDay = function createEvents (events) {
             start: event.start,
             end: event.end,
             position: properties.get_position(),
+            width: properties.width,
             overlap: overlap.events,
             container: container,
         };
 
+        for(new_event in overlap.events) {
+            console.log(new_event, event_index)
+            if(new_event !== event_index) events_spaces[new_event].overlap = overlap.events;
+        }
+
         event_index++
 
-    })
+    });
 
    for (event in events_spaces) {
       events_container.appendChild(events_spaces[event].container);
    }
 
-   console.log(events_spaces);
 }
-
-
 
 
 function checkErrors(events) {
@@ -216,5 +209,5 @@ function checkErrors(events) {
    if (errorInput) {return true}
 }
 
-/*layOutDay([{start: 30, end: 150}, {start: 540, end: 600}, {start: 560, end: 620}, {start: 610, end: 670} ]);*/
-layOutDay(createEvents(10));
+layOutDay([{start: 30, end: 150}, {start: 540, end: 600}, {start: 560, end: 620}, {start: 610, end: 670} ]);
+/*layOutDay(createEvents(5));*/
