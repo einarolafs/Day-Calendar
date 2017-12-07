@@ -151,8 +151,6 @@ const layOutDay = function createEvents (events) {
 
        /* console.log(event_index, properties.width, events_spaces[event_index -1]);*/
 
-       
-
         style_events(container, overlap.index, properties.width);
 
         container.style.width = properties.width + 'px';
@@ -176,6 +174,7 @@ const layOutDay = function createEvents (events) {
 
         for(new_event in overlap.events) {
             events_spaces[new_event].overlap = overlap.events;
+            events_spaces[new_event].count = overlap.count().length;
         }
 
         event_index++
@@ -188,25 +187,30 @@ const layOutDay = function createEvents (events) {
         for (overlap_event in events_spaces[event].overlap) {
             total_width = total_width + events_spaces[event].overlap[overlap_event].width;
         }
+        total_width = total_width + events_spaces[event].width;
+        
+        if(events_spaces[event].count === 0 && events_spaces[event].width < 600) {
+            console.log(events_spaces[event]);
+            let width = 600;
+            events_spaces[event].width = width;
+            events_spaces[event].container.style.width = width + "px";
+
+        }
 
         if(total_width < 600 && events_spaces[event].position !== 0) {
-            console.log(events_spaces[event]);
-            let space = (600 - total_width);
+            console.log(events_spaces[event], 'total width:',  total_width);
+            let space = (600 - total_width) + events_spaces[event].width;
             let width = events_spaces[event].width + space;
             let position = events_spaces[event].position - space;
-
-            console.log('total_width:', total_width, 'space: ', space, 'width: ', width, 'position: ', position)
 
             events_spaces[event].width = width;
             events_spaces[event].position = position;
             events_spaces[event].container.style.width = width + "px";
             events_spaces[event].container.style.left = position + "px";
-            console.log(events_spaces[event]);
-
         };
     }
 
-    //console.log(events_spaces);
+    console.log(events_spaces);
 
    for (event in events_spaces) {
       events_container.appendChild(events_spaces[event].container);
@@ -259,7 +263,9 @@ let emptySpaces = [{"start":41,"end":401},{"start":49,"end":369},{"start":51,"en
 
 let wrongPosition = [{"start":122,"end":596},{"start":355,"end":488},{"start":490,"end":597},{"start":611,"end":668},{"start":700,"end":720}];
 
-layOutDay(wrongPosition);
+let wrongLong = [{"start":196,"end":321},{"start":241,"end":374},{"start":488,"end":536},{"start":654,"end":686},{"start":692,"end":702}]
+
+layOutDay(wrongLong);
 
 
 function createNewEvents(){
