@@ -33,7 +33,9 @@ time_of_day.forEach(function(time, i){
 
 
 const layOutDay = function createEvents (events) { 
+    
     console.log(events);
+
     if(checkErrors(events)){return}
 
     // End of error checking
@@ -48,22 +50,38 @@ const layOutDay = function createEvents (events) {
     //Object to hold all the events
     events_spaces = {}
 
+    // Current index of the event
     event_index = 0;
 
+    // Loop through the events
     events.forEach( function(event, index) {
 
         let container = document.createElement("div");
 
+        // Add sample content the the event container
         container.insertAdjacentHTML('beforeend', content);
 
+        // Create the object the event and information about it will be stored it
         events_spaces[event_index] = {id: event_index, overlap:{}};
 
+        // Set properties for the event
         let properties = {
             width: 600,
             get_position: function(){
                 return this.width * overlap.index;
             }
         }
+
+
+        /* Object to store information about any events that overlap with the current event 
+             @events holds all events found to overlap with the current one, it also adds any event that has been stored as an overlapping event in the any previous event
+
+             @shallow_events shows only the immediate events that overlap with the current one, it does check what events the previous once have as well. 
+
+             @count is a function that will give you a number of how many events are overlapping the current event, if set to true, then it will only give the number of shallow_events
+
+             @index holds the index of how many overlapping items have been found and need to be positioned.
+        */
 
         let overlap = {
             events: {},
@@ -101,17 +119,18 @@ const layOutDay = function createEvents (events) {
             i = event_index;
 
             if (past.end > event.start && past.start < event.end && event_index > 0) {
+                // Store the event in both the event object and shallow_events object
                 overlap.events[past.id] = past;
                 overlap.shallow_events[past.id] = past;
 
                 for (deep_overlap in past.overlap) {
+                    // Go further through the overlapping events and store all events they have along with this one.
                     overlap.events[past.overlap[deep_overlap].id] = past.overlap[deep_overlap];
                 }
             }
         }
         
-        // Divide width among all items that overlap
-
+            /* Create a fix so that when only two items overlap in shallow_events, ( but is marked as 3 in events), that all the events should have 300px and should either be pushed to the left side or stay on the right side  */
             last_index = event_index > 0 ? event_index - 1 : 0;
 /*
             console.log(last_index)
@@ -138,22 +157,10 @@ const layOutDay = function createEvents (events) {
             }
         }
 
-
-/*
-        for (past in overlap.shallow_events) { 
-            if (overlap.events[past].position === properties.width) {
-                properties.position = 0;
-            } else { 
-                overlap.events[past].container.style.width = properties.width + 'px';
-                properties.position++ 
-            }
-        }*/
-
-       /* console.log(event_index, properties.width, events_spaces[event_index -1]);*/
-
+        // Style the current event
         style_events(container, overlap.index, properties.width);
 
-        container.style.width = properties.width + 'px';
+        // Add the height of the event, as well as it's top position and id
         container.style.height = (event.end - event.start) + 'px';
         container.style.top = event.start + 'px';
         container.id = event_index;
@@ -172,23 +179,32 @@ const layOutDay = function createEvents (events) {
             container: container,
         };
 
-        for(new_event in overlap.events) {
-            events_spaces[new_event].overlap = overlap.events;
-            events_spaces[new_event].count = overlap.count().length;
+
+        // Store information about overlapping events in previous events as well
+        for(overlap_event in overlap.events) {
+            events_spaces[overlap_event].overlap = overlap.events;
+            events_spaces[overlap_event].count = overlap.count().length;
         }
 
         event_index++
 
     });
-    
+
+
+    /* Loop to help fix issues were events are leaving a empty space between them and the next event in the same time slot,
+        This should try to move the event to the left and make it's with larger
+     */    
     for(event in events_spaces) {
-        let total_width = events_spaces[event].width;
         
+        // Start by counting the total with of all items that overlap with the current one.
+        let total_width = events_spaces[event].width;
         for (overlap_event in events_spaces[event].overlap) {
             total_width = total_width + events_spaces[event].overlap[overlap_event].width;
         }
-        total_width = total_width + events_spaces[event].width;
-        
+
+        /*console.log(events_spaces[event], total_width);*/
+
+        // If an event is in the position 0 has no overlapping events but is not set to be full 600 width, then fix the event to take up all 600px
         if(events_spaces[event].count === 0 && events_spaces[event].width < 600) {
             console.log(events_spaces[event]);
             let width = 600;
@@ -197,9 +213,9 @@ const layOutDay = function createEvents (events) {
 
         }
 
-        if(total_width < 600 && events_spaces[event].position !== 0) {
-            console.log(events_spaces[event], 'total width:',  total_width);
-            let space = (600 - total_width) + events_spaces[event].width;
+        //Find event that is less then 599px (some total_width will get to 599.9999px) and fix it's width and position to fill up any empty space
+        if(total_width < 599 && events_spaces[event].position !== 0) {
+            let space = (600 - total_width);
             let width = events_spaces[event].width + space;
             let position = events_spaces[event].position - space;
 
@@ -212,6 +228,7 @@ const layOutDay = function createEvents (events) {
 
     console.log(events_spaces);
 
+   // Add the events to the container 
    for (event in events_spaces) {
       events_container.appendChild(events_spaces[event].container);
    }
@@ -220,7 +237,7 @@ const layOutDay = function createEvents (events) {
 
 
 function checkErrors(events) {
-       // Star with some error handling to make sure the array of events and the events them selfs are correct
+    // Some error handling to make sure the array of events and the events them selfs are correct
 
    let pleseProvide = 'Please provide an array of objects in the format of {start:50, end:100}'
 
@@ -254,7 +271,9 @@ function checkErrors(events) {
    if (errorInput) {return true}
 }
 
+// Call a default layout
 /*layOutDay([{start: 30, end: 150}, {start: 540, end: 600}, {start: 560, end: 620}, {start: 610, end: 670} ]);*/
+
 let conflicted = [{"start":31,"end":466},{"start":51,"end":403},{"start":88,"end":141},{"start":203,"end":562},{"start":340,"end":502},{"start":388,"end":569},{"start":406,"end":608},{"start":559,"end":670},{"start":668,"end":699},{"start":682,"end":709}];
 
 let smallColide = [{"start":132,"end":683},{"start":255,"end":352},{"start":664,"end":698}];
@@ -265,9 +284,9 @@ let wrongPosition = [{"start":122,"end":596},{"start":355,"end":488},{"start":49
 
 let wrongLong = [{"start":196,"end":321},{"start":241,"end":374},{"start":488,"end":536},{"start":654,"end":686},{"start":692,"end":702}]
 
-layOutDay(wrongLong);
+layOutDay(emptySpaces);
 
-
+// Function to create events when button is clicked
 function createNewEvents(){
     layOutDay(createEvents(document.getElementById('numberValue').value));
 }
