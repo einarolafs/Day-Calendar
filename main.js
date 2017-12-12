@@ -5,18 +5,19 @@ const time_of_day = ['9:00', '9:30', '10:00', '10:30', '11:00', '11:30', '12:00'
 // Helper function to check if number is even or odd
 const is_even = (x) => !(x % 2);
 
-// Helper function to find the median of a row of numbers within an array
-const median = function find_median(values){
-   values.sort(function(a,b){
-        return a-b;
-    });
-     
-     var half = Math.floor(values.length / 2);
-  
-     if (values.length % 2)
-        return values[half];
-     else
-        return (values[half - 1] + values[half]) / 2.0;
+// Helper function to order object, in this case to order them based on first start date to last
+function compare(a, b) {
+    // Use toUpperCase() to ignore character casing
+    const genreA = a.start;
+    const genreB = b.start;
+
+    let comparison = 0;
+    if (genreA > genreB) {
+        comparison = 1;
+    } else if (genreA < genreB) {
+        comparison = -1;
+    }
+    return comparison;
 }
 
 //Store reference to the DOM containers that will be populated with the time on the left side and the events
@@ -24,135 +25,201 @@ const time_container = document.querySelector('.calendar .time');
 const events_container = document.querySelector('.calendar .events')
 
 //Populate the left side with the time of day
-time_of_day.forEach(function(time, i){
-   let container = document.createElement("div");
-   const twelve_hour = i >= 6 ? '<span>pm</span>' : '<span>am</span>';
-   let content = `${time_of_day[i]} ${is_even(i) ? twelve_hour : ''}`;
-   container.insertAdjacentHTML('beforeend', content); time_container.append(container);
+time_of_day.forEach(function(time, i) {
+    let container = document.createElement("div");
+    const twelve_hour = i >= 6 ? '<span>pm</span>' : '<span>am</span>';
+    let content = `${time_of_day[i]} ${is_even(i) ? twelve_hour : ''}`;
+    container.insertAdjacentHTML('beforeend', content);
+    time_container.append(container);
 });
 
 
-const layOutDay = function createEvents (events) { 
-
-   // Star with some error handling to make sure the array of events and the events them selfs are correct
-
-   var pleseProvide = 'Please provide an array of objects in the format of {start:50, end:100}'
-
-   if(!events) {
-      console.error('No arguments to process. ' + pleseProvide)
-      return
-   }
-
-   if (!(events instanceof Array)) {
-      console.error('The variable given is not an Array and therefor cannot be processed. ' + pleseProvide)
-      return
-   }
-
-   let errorInput = [];
-   events.forEach(function(event) {
-      if(event.start < 0 || event.end > 720) {
-         console.error('incorrect time values, start time cannot be lower then 0 and end time cannot be higher then 720.');
-
-         errorInput.push(1);
-         
-      } else if (event.end < event.start){
-         console.error('Incorrect time values, end time cannot be lower then the start time.');
-
-         errorInput.push(1);
-      }
-   });
-
-   if (!!errorInput.length) {return}
-
-   // End of error checking
+const CANVAS_WIDTH = 600;
+const PADDING = 10;
 
 
+function layOutDay(events) {
 
-   //Clear events container of previous content
-   events_container.innerHTML = '';
+    if (check_for_errors(events)) { return };
 
-   //Create simple content for each event
-   const content = "<div><h4>Sample event</h4><p>Sample event</p></div>"
+    o_events = organize_events(events);
 
-   //Object to hold all the events
-   events_spaces = {}
+    let timeline = create_timeline(events);
 
-   events.forEach( function(event, index) {
+    events_container.innerHTML = '';
 
-      let container = document.createElement("div");
+    // Main container to hold all the information about the events and their relations ships together, marking them down into groups and sub_groups.
+    let event_container = {
+        groups: []
+    }
 
-      container.insertAdjacentHTML('beforeend', content);
+    create_groups(timeline, o_events, event_container);
 
-      let properties = {
-         width: 600,
-         position: 0,
-         get_position: function(){
-            return this.width * this.position;
-         }
-      }
+    // Set with for each group, this will be used to give the width to each element in the group. The width is based on the larges subgroup within each given group
+    event_container.groups.forEach(function(group) {
+        subgroup_size = 1;
+        group.events.forEach(function(event) {
+            subgroup_size = Math.max(subgroup_size, event.largest_subgroup);
+        });
 
-      let overlap = {
-         events: [],
-         count: [1],
-         index: 1,
-      }
+        group.width = CANVAS_WIDTH / subgroup_size;
+        group.largest_subgroup = subgroup_size;
 
-      // Function to be used to style multiple overlapping events.
-      const style_multiple_events = function(event, index, count, width) {
-         position = ((index - median(count)) * width);
+    });
 
-         event.style.width = width + 'px';
-         event.style.left = 'calc(50% - ' + (width / 2) + 'px';
-         event.style.transform = 'translatex('+ position +'px)'
-      }
 
-      //count the amount of events that overlap with this one and store each one in an array
-      for (past in events_spaces) {
-         if (events_spaces[past].end > event.start && events_spaces[past].start < event.end) {
-            overlap.events.push(events_spaces[past]);
-            overlap.count.push(overlap.count.length + 1);
-         }
-      }
+    // Set the position of each event in group
+    event_container.groups.forEach(function(group) {
 
-      //Divide width among all items that overlap
-      properties.width = (properties.width / (overlap.events.length + 1));
+        for (event_index in group.events) {
+            var event = group.events[event_index];
+            position = new Array(event.largest_subgroup);
 
-      if(overlap.events.length > 1) {
-         for (past in overlap.events) {
-            style_multiple_events(overlap.events[past].container, overlap.index, overlap.count, properties.width);
-            overlap.index++;
-         } 
-      } else {
-         for (past in overlap.events) { 
-            if (overlap.events[past].position === properties.width) {
-               properties.position = 0;
-            } else { 
-               overlap.events[past].container.style.width = properties.width + 'px';
-               properties.position++ 
+            for (let index in event.subgroup) {
+                let neighbour = event.subgroup[index];
+                if (neighbour.position != null) {
+                    position[neighbour.position] = true;
+                }
             }
-         }
-      }
 
-      if (overlap.count.length > 2) style_multiple_events(container, overlap.index, overlap.count, properties.width);
-      else container.style.left = properties.get_position() + 'px';
+            for (let i = 0; i < position.length; i++) {
+                if (!position[i]) {
+                    event.position = i;
+                    break;
+                }
+            }
+        };
+    });
 
-      container.style.width = properties.width + 'px';
-      container.style.height = (event.end - event.start) + 'px';
-      container.style.top = event.start + 'px';
+    const content = "<div><h4>Sample event</h4><p>Sample event</p></div>"
 
-      // Add the event to an object that will store all the events to display, so that they can be retrieved and calculated against
-      events_spaces[Math.random().toString(36).substr(2, 10)] = {
-         end: event.end,
-         start: event.start,
-         position: properties.get_position(),
-         container: container,
-      };
+    // Create and append the DOM elements for each event
+    for (const event_id in o_events) {
+        const event = o_events[event_id];
+        let container = document.createElement("div");
 
-   })
+        // Style the event
+        container.style.cssText = `height:${event.end - event.start}px; width:${event.group.width}px; top: ${event.start}px; left: ${event.group.width * event.position + PADDING}px`;
+        container.insertAdjacentHTML('beforeend', content);
 
-   for (event in events_spaces) {
-      events_container.appendChild(events_spaces[event].container);
-   }
+        events_container.appendChild(container);
+    }
+
 }
 
-layOutDay([{start: 30, end: 150}, {start: 540, end: 600}, {start: 560, end: 620}, {start: 610, end: 670} ]);
+// Create a array with empty length of each minute in the calendar, between 9am to 9pm. This will be used to map what minute each event occupies and how many occupy minutes together.
+function create_timeline(events) {
+    let timeline = new Array(720);
+    for (let i = 0; i < timeline.length; i++) {
+        timeline[i] = new Array();
+    };
+
+    events.forEach(function(event, index) {
+        event.id = index
+    });
+
+    events.forEach(function(event) {
+        for (let i = event.start; i <= event.end; i++) {
+            timeline[i].push(event.id);
+        }
+    });
+    return timeline;
+}
+
+/* Function to further order events, given each event information, like and id, its start and end time, the closest events it collides with (neighbors), all events in the group it belongs to, the position of the event within that group and the size of the largest subgroup that the event belongs to. */
+
+function organize_events(events) {
+    let organized_events = {}
+    let Event = function(id, start, end) {
+        this.id = id;
+        this.start = start;
+        this.end = end;
+        this.subgroup = {};
+        this.group = null;
+        this.position = null;
+        this.largest_subgroup = 1;
+    }
+
+    events = events.sort(compare);
+
+    events.forEach(function(event, index) {
+        organized_events[index] = new Event(index, event.start, event.end)
+    });
+
+    return organized_events;
+}
+
+// Function for creating groups between connected elements
+function create_groups(timeline, events, event_container) {
+    let group = null;
+
+    timeline.forEach(function(minute) {
+        if (minute.length > 0) {
+            group = group || { events: [], width: 0 };
+            //console.log('minute', minute, minute.length);
+            minute.forEach(function(event_id, index) {
+                if (!group.events[event_id]) {
+                    group.events[event_id] = events[event_id];
+                    events[event_id].group = group;
+                };
+            });
+        } else {
+
+            if (group != null) {
+                event_container.groups.push(group);
+            }
+
+            group = null;
+
+        }
+    });
+
+    timeline.forEach(function(minute) {
+        minute.forEach(function(event_id) {
+            let event = events[event_id];
+            event.largest_subgroup = Math.max(event.largest_subgroup, minute.length);
+
+            minute.forEach(function(targetEventId) {
+                if (event_id != targetEventId) {
+                    event.subgroup[targetEventId] = events[targetEventId];
+                }
+            });
+        });
+    });
+
+    event_container.events = events
+}
+
+// Some error handling to make sure the array of events and the events them selfs are correct
+function check_for_errors(events) {
+    let pleseProvide = 'Please provide an array of objects in the format of {start:50, end:100}'
+
+    var errorInput = false;
+
+    if (!events) {
+        console.error(`No arguments to process. ${pleseProvide}`)
+        errorInput = true;
+        return
+    }
+    if (!(events instanceof Array)) {
+        console.error(`The variable given is not an Array and therefor cannot be processed. ${pleseProvide}`)
+        errorInput = true;
+        return
+    }
+    events.forEach(function(event) {
+        if (event.start < 0 || event.end > 720) {
+            console.error('incorrect time values, start time cannot be lower then 0 and end time cannot be higher then 720.');
+
+            errorInput = true;
+
+        } else if (event.end < event.start) {
+            console.error('Incorrect time values, end time cannot be lower then the start time.');
+
+            errorInput = true;
+        }
+    });
+
+    if (errorInput) { return true }
+}
+
+layOutDay([{ start: 30, end: 150 }, { start: 540, end: 600 }, { start: 560, end: 620 }, { start: 610, end: 670 }]);
